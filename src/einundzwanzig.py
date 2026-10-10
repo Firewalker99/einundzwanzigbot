@@ -60,7 +60,7 @@ def episode(update: Update, context: CallbackContext):
         message = get_episode(urlAll)
     elif episode_format == "weg":
         message = get_episode(urlWeg)
-    elif episode_format == "interview":
+    elif episode_format in ("interview", "interviews"):
         message = get_episode(urlInterviews)
     else:
         message = 'Das ist kein gültiges Podcast-Format! Bitte gibt eins der folgenden Formate an: Alle, Interviews, ' \
@@ -234,7 +234,13 @@ def soundboard(update: Update, context: CallbackContext):
         update.message.reply_text('Server nicht verfügbar. Bitte später nochmal versuchen!')
         return
 
-    sounds_dict = json.loads(sounds_request.text)
+    try:
+        sounds_request.raise_for_status()
+        sounds_dict = sounds_request.json()
+    except Exception as e:
+        logging.error(f'Could not load sounds.json: {e}')
+        update.message.reply_text('Server nicht verfügbar. Bitte später nochmal versuchen!')
+        return
 
     keyboard = []
 
@@ -256,7 +262,12 @@ def soundboard_button(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
 
-    sounds_dict = context.user_data['sounds_dict']
+    sounds_dict = context.user_data.get('sounds_dict') if context.user_data is not None else None
+
+    if sounds_dict is None:
+        # The bot was restarted or the data got lost, the user has to start over
+        query.edit_message_text('Die Auswahl ist abgelaufen. Bitte starte das Soundboard mit /soundboard neu.')
+        return
 
     if query.data == 'back_button':
         # Handle pressing the back button on the first level
@@ -299,7 +310,7 @@ def soundboard_button(update: Update, context: CallbackContext):
         group_index = int(hierarchy[0])
         sound_index = int(hierarchy[1])
 
-        sound_url = context.user_data['sounds_dict'][group_index]['sounds'][sound_index]['url']
+        sound_url = sounds_dict[group_index]['sounds'][sound_index]['url']
 
         query.delete_message()
         context.bot.send_audio(chat_id=update.effective_message.chat_id, audio=str(sound_url))

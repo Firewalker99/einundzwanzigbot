@@ -184,7 +184,7 @@ def run(bot_token: str):
     )
     glaskugel_handler = CommandHandler('glaskugel', glaskugel_command, run_async=True)
     soundboard_handler = CommandHandler('soundboard', soundboard_command, run_async=True)
-    soundboard_callback_handler = CallbackQueryHandler(soundboard_button)
+    soundboard_callback_handler = CallbackQueryHandler(soundboard_button, pattern=r'^(back_button|group_.*|\d+_\d+)$', run_async=True)
 
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(taproot_handler)

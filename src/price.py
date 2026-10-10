@@ -91,8 +91,13 @@ def preis(update: Update, context: CallbackContext):
     Current Coinbase price
     """
 
-    price_usd = get_coinbase_price('USD')
-    price_eur = get_coinbase_price('EUR')
+    try:
+        price_usd = get_coinbase_price('USD')
+        price_eur = get_coinbase_price('EUR')
+    except Exception:
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text='Server nicht verfügbar. Bitte später nochmal versuchen!')
+        return
 
     message = dedent(f"""
     <b>Preis</b>
@@ -107,8 +112,13 @@ def moskauzeit(update: Update, context: CallbackContext):
     """
     Get the current price in satoshi per USD and satoshi per EUR
     """
-    price_usd = get_coinbase_price('USD')
-    price_eur = get_coinbase_price('EUR')
+    try:
+        price_usd = get_coinbase_price('USD')
+        price_eur = get_coinbase_price('EUR')
+    except Exception:
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text='Server nicht verfügbar. Bitte später nochmal versuchen!')
+        return
 
     sat_per_usd = int(1 / price_usd * 100_000_000)
     sat_per_eur = int(1 / price_eur * 100_000_000)
@@ -129,10 +139,18 @@ def sat_in_fiat(update: Update, context: CallbackContext, fiat: str):
 
     try:
         sats_amount = int(context.args[0])
+        if sats_amount < 0:
+            raise ValueError
     except:
         sats_amount = 10000
 
-    price = get_coinbase_price(fiat)
+    try:
+        price = get_coinbase_price(fiat)
+    except Exception:
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text='Server nicht verfügbar. Bitte später nochmal versuchen!')
+        return
+
     sats_in_eur = price / 100_000_000 * sats_amount
 
     message = dedent(f"""
